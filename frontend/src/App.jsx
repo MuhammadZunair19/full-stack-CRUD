@@ -1,5 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, Edit3, File, Image, Plus, RefreshCw, Search, Trash2, Upload, X } from 'lucide-react';
+import {
+  Cloud,
+  Database,
+  Download,
+  Edit3,
+  File,
+  FolderOpen,
+  HardDrive,
+  Image,
+  Plus,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Trash2,
+  Upload,
+  X
+} from 'lucide-react';
 import { createItem, deleteItem, getItems, updateItem } from './api.js';
 
 const blankForm = {
@@ -30,6 +46,11 @@ export default function App() {
       `${item.name} ${item.description}`.toLowerCase().includes(value)
     );
   }, [items, query]);
+
+  const attachedCount = useMemo(
+    () => items.filter((item) => Boolean(item.attachment)).length,
+    [items]
+  );
 
   async function loadItems() {
     setLoading(true);
@@ -99,14 +120,31 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <section className="topbar">
-        <div>
-          <p className="eyebrow">AWS CRUD project</p>
-          <h1>Item manager</h1>
+      <section className="hero-panel">
+        <div className="hero-copy">
+          <span className="brand-mark">
+            <Cloud size={22} />
+            Cloud CRUD
+          </span>
+          <h1>Manage cloud-backed items and attachments.</h1>
+          <p>
+            A deploy-ready CRUD workspace with an Express API, React interface,
+            DynamoDB-ready records, and private S3-style file access.
+          </p>
         </div>
-        <button className="icon-button" onClick={loadItems} title="Refresh items" type="button">
-          <RefreshCw size={20} />
-        </button>
+        <div className="hero-actions">
+          <button className="secondary-button" onClick={loadItems} type="button">
+            <RefreshCw size={18} />
+            Refresh
+          </button>
+        </div>
+      </section>
+
+      <section className="stats-grid" aria-label="Project stats">
+        <StatCard icon={<Database size={22} />} label="Items" value={items.length} />
+        <StatCard icon={<FolderOpen size={22} />} label="Attachments" value={attachedCount} />
+        <StatCard icon={<ShieldCheck size={22} />} label="Access" value="Signed URLs" />
+        <StatCard icon={<HardDrive size={22} />} label="Storage" value="Local / AWS" />
       </section>
 
       {error && (
@@ -118,7 +156,10 @@ export default function App() {
       <section className="workspace">
         <form className="editor" onSubmit={handleSubmit}>
           <div className="section-heading">
-            <h2>{editing ? 'Edit item' : 'Create item'}</h2>
+            <div>
+              <p className="section-kicker">{editing ? 'Update record' : 'New record'}</p>
+              <h2>{editing ? 'Edit item' : 'Create item'}</h2>
+            </div>
             {editing && (
               <button className="ghost-button" onClick={resetForm} type="button">
                 <X size={18} />
@@ -150,8 +191,13 @@ export default function App() {
           </label>
 
           <label className="file-picker">
-            <Upload size={20} />
-            <span>{form.file ? form.file.name : 'Choose attachment'}</span>
+            <span className="upload-icon">
+              <Upload size={20} />
+            </span>
+            <span>
+              <strong>{form.file ? form.file.name : 'Choose attachment'}</strong>
+              <small>Images preview instantly. Files up to 10MB.</small>
+            </span>
             <input
               onChange={(event) => setForm({ ...form, file: event.target.files[0] || null })}
               type="file"
@@ -176,32 +222,50 @@ export default function App() {
         </form>
 
         <section className="list-panel">
-          <div className="search-row">
-            <Search size={18} />
-            <input
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search items"
-              value={query}
-            />
+          <div className="list-toolbar">
+            <div>
+              <p className="section-kicker">Inventory</p>
+              <h2>Stored items</h2>
+            </div>
+            <div className="search-row">
+              <Search size={18} />
+              <input
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search items"
+                value={query}
+              />
+            </div>
           </div>
 
           {loading ? (
-            <div className="empty-state">Loading items...</div>
+            <div className="empty-state">
+              <RefreshCw size={24} />
+              <strong>Loading items...</strong>
+            </div>
           ) : filteredItems.length === 0 ? (
-            <div className="empty-state">No items found.</div>
+            <div className="empty-state">
+              <FolderOpen size={30} />
+              <strong>No items found</strong>
+              <span>Create your first item or clear the search filter.</span>
+            </div>
           ) : (
             <div className="grid">
               {filteredItems.map((item) => (
                 <article className="item-card" key={item.id}>
                   <button className="card-main" onClick={() => setSelected(item)} type="button">
                     <AttachmentPreview attachment={item.attachment} />
-                    <span>
+                    <span className="card-copy">
                       <strong>{item.name}</strong>
                       <small>{formatDate(item.updatedAt)}</small>
                     </span>
                     <p>{item.description || 'No description'}</p>
                   </button>
                   <div className="card-actions">
+                    {item.attachment && (
+                      <a href={item.attachment.url} rel="noreferrer" target="_blank" title="Open attachment">
+                        <Download size={17} />
+                      </a>
+                    )}
                     <button onClick={() => startEdit(item)} title="Edit item" type="button">
                       <Edit3 size={17} />
                     </button>
@@ -220,7 +284,10 @@ export default function App() {
         <div className="modal-backdrop" onClick={() => setSelected(null)}>
           <section className="modal" onClick={(event) => event.stopPropagation()}>
             <div className="section-heading">
-              <h2>{selected.name}</h2>
+              <div>
+                <p className="section-kicker">Item detail</p>
+                <h2>{selected.name}</h2>
+              </div>
               <button className="icon-button" onClick={() => setSelected(null)} title="Close" type="button">
                 <X size={20} />
               </button>
@@ -243,6 +310,18 @@ export default function App() {
         </div>
       )}
     </main>
+  );
+}
+
+function StatCard({ icon, label, value }) {
+  return (
+    <article className="stat-card">
+      <span>{icon}</span>
+      <div>
+        <strong>{value}</strong>
+        <small>{label}</small>
+      </div>
+    </article>
   );
 }
 
