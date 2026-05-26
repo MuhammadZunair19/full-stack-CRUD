@@ -292,4 +292,4 @@ These folders are ignored by Git so local demo data does not pollute the reposit
 
 ## License
 
-This project is intended for academic and portfolio use. Add a license file before using it in a public production project.
+This project is licensed under the [MIT License](LICENSE).
