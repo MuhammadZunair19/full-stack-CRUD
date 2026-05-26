@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { v4 as uuid } from 'uuid';
@@ -11,12 +11,15 @@ const dataFile = path.join(dataDir, 'items.json');
 export class LocalItemStore {
   async listItems() {
     const items = await readItems();
-    return items.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    return items
+      .map(withLocalFileUrl)
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
   }
 
   async getItem(id) {
     const items = await readItems();
-    return items.find((item) => item.id === id) || null;
+    const item = items.find((candidate) => candidate.id === id);
+    return item ? withLocalFileUrl(item) : null;
   }
 
   async createItem({ name, description, file }) {
@@ -33,7 +36,7 @@ export class LocalItemStore {
     const items = await readItems();
     items.push(item);
     await writeItems(items);
-    return item;
+    return withLocalFileUrl(item);
   }
 
   async updateItem(id, { name, description, file, removeFile }) {
@@ -62,7 +65,7 @@ export class LocalItemStore {
     };
 
     await writeItems(items);
-    return items[index];
+    return withLocalFileUrl(items[index]);
   }
 
   async deleteItem(id) {
@@ -77,6 +80,13 @@ export class LocalItemStore {
     await writeItems(items.filter((candidate) => candidate.id !== id));
     return true;
   }
+
+  async getFile(storageKey) {
+    const safeKey = path.basename(storageKey);
+    const filePath = path.join(uploadDir, safeKey);
+    await stat(filePath);
+    return filePath;
+  }
 }
 
 async function saveLocalFile(file) {
@@ -88,8 +98,19 @@ async function saveLocalFile(file) {
     storageKey,
     fileName: file.originalname,
     mimeType: file.mimetype,
-    size: file.size,
-    url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`
+    size: file.size
+  };
+}
+
+function withLocalFileUrl(item) {
+  if (!item.attachment?.storageKey) return item;
+
+  return {
+    ...item,
+    attachment: {
+      ...item.attachment,
+      url: `/api/files/${encodeURIComponent(item.attachment.storageKey)}`
+    }
   };
 }
 

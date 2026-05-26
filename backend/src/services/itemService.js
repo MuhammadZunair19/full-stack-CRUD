@@ -21,7 +21,15 @@ export function createItemService() {
         removeFile
       });
     },
-    remove: (id) => store.deleteItem(id)
+    remove: (id) => store.deleteItem(id),
+    getFile: (storageKey) => {
+      if (!store.getFile) {
+        const error = new Error('File download endpoint is only available for local storage');
+        error.statusCode = 404;
+        throw error;
+      }
+      return store.getFile(storageKey);
+    }
   };
 }
 

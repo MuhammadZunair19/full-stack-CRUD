@@ -48,6 +48,19 @@ app.get('/api/items/:id', async (req, res, next) => {
   }
 });
 
+app.get('/api/files/:storageKey', async (req, res, next) => {
+  try {
+    const filePath = await items.getFile(req.params.storageKey);
+    res.sendFile(filePath);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      res.status(404).json({ message: 'File not found' });
+      return;
+    }
+    next(error);
+  }
+});
+
 app.post('/api/items', upload.single('file'), async (req, res, next) => {
   try {
     const item = await items.create({
