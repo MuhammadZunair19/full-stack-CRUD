@@ -1,27 +1,71 @@
 # Cloud CRUD App
 
-A full-stack CRUD application for managing items with optional file attachments. The project is built for a cloud computing course and demonstrates a React frontend, an Express API, file uploads, DynamoDB item storage, and private S3 object storage with signed URLs.
+![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=111827)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-DynamoDB%20%2B%20S3-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-The app can also run locally without AWS credentials. In local mode, item records are saved to JSON and uploaded files are saved under the backend folder, which makes development and demos easier.
+A polished full-stack CRUD application built to demonstrate cloud-native development with a modern React interface, an Express REST API, file uploads, Amazon DynamoDB item storage, and Amazon S3 attachment storage with secure signed URLs.
 
-## Features
+This project was designed as a cloud computing course project, but it is structured like a real deployable app: clean frontend/backend separation, environment-based configuration, local development storage, AWS-ready services, Docker support, and a production build served by Express.
 
-- Create items with a name, description, and optional attachment.
-- View all items in a responsive grid.
-- Open item details in a modal.
-- Edit item text and replace or remove attachments.
-- Delete items and clean up attached files.
-- Preview image files.
-- Use AWS DynamoDB and S3 when configured.
-- Use local storage for offline development.
-- Serve the production frontend from the Express backend.
+## Why This Project Stands Out
+
+- Full CRUD workflow: create, read, update, and delete item records.
+- File attachment support with image previews and file replacement.
+- Secure attachment access through signed URLs when using S3.
+- Local storage mode for fast demos without AWS credentials.
+- AWS storage mode for DynamoDB and S3 integration.
+- Responsive dashboard UI with item stats, search, cards, and detail modal.
+- Docker-ready production deployment.
+- Health check endpoint for monitoring.
+
+## Preview
+
+The frontend is a deploy-ready dashboard experience with:
+
+- A hero section for the project identity.
+- Live stats for records and attachments.
+- A create/edit panel.
+- Searchable item grid.
+- Attachment previews and download/open actions.
+- Mobile-friendly layout.
+
+Add a screenshot to your repo at `docs/screenshot.png`, then uncomment this line:
+
+```md
+<!-- ![Cloud CRUD App Screenshot](docs/screenshot.png) -->
+```
+
+## Architecture
+
+```text
+React + Vite Frontend
+        |
+        | HTTP / multipart form-data
+        v
+Express.js REST API
+        |
+        |-- Local development mode
+        |     |-- JSON item records
+        |     `-- Local uploaded files
+        |
+        `-- AWS production mode
+              |-- DynamoDB item records
+              `-- S3 private file objects + signed URLs
+```
 
 ## Tech Stack
 
-- Frontend: React 18, Vite, lucide-react, CSS.
-- Backend: Node.js 20, Express, Multer, AWS SDK v3.
-- Cloud services: Amazon DynamoDB and Amazon S3.
-- Deployment: Docker and Docker Compose.
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 18, Vite, CSS, lucide-react |
+| Backend | Node.js 20, Express.js, Multer |
+| Cloud Database | Amazon DynamoDB |
+| Cloud Storage | Amazon S3 |
+| AWS SDK | AWS SDK for JavaScript v3 |
+| Deployment | Docker, Docker Compose |
 
 ## Project Structure
 
@@ -34,48 +78,62 @@ The app can also run locally without AWS credentials. In local mode, item record
 |       |-- config.js
 |       |-- server.js
 |       `-- services/
+|           |-- itemService.js
+|           `-- stores/
+|               |-- awsItemStore.js
+|               `-- localItemStore.js
 |-- frontend/
 |   |-- .env.example
 |   |-- index.html
 |   |-- package.json
+|   |-- vite.config.js
 |   `-- src/
+|       |-- App.jsx
+|       |-- api.js
+|       |-- main.jsx
+|       `-- styles.css
 |-- Dockerfile
 |-- docker-compose.yml
 |-- package.json
 `-- README.md
 ```
 
-## Prerequisites
+## Getting Started
 
-- Node.js 20 or newer.
-- npm.
-- AWS credentials only if you want to run with DynamoDB and S3.
+### Prerequisites
 
-## Run Locally
+- Node.js 20 or newer
+- npm
+- Docker, optional
+- AWS account and credentials, only required for AWS mode
 
-1. Install dependencies from the project root.
+### 1. Install Dependencies
 
 ```bash
 npm install
 ```
 
-2. Create environment files.
+### 2. Create Environment Files
 
-On Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 Copy-Item backend/.env.example backend/.env
 Copy-Item frontend/.env.example frontend/.env
 ```
 
-On macOS/Linux:
+macOS/Linux:
 
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-3. Keep local storage enabled in `backend/.env`.
+### 3. Run in Local Mode
+
+Local mode works without AWS credentials.
+
+In `backend/.env`, keep:
 
 ```env
 STORAGE_DRIVER=local
@@ -83,13 +141,13 @@ PORT=3001
 FRONTEND_ORIGIN=http://localhost:3000
 ```
 
-4. Start the frontend and backend together.
+Start the app:
 
 ```bash
 npm run dev
 ```
 
-5. Open the app.
+Open:
 
 ```text
 Frontend: http://localhost:3000
@@ -97,35 +155,33 @@ Backend:  http://localhost:3001
 Health:   http://localhost:3001/health
 ```
 
-If PowerShell blocks `npm`, use `npm.cmd` instead:
+If PowerShell blocks `npm`, use:
 
 ```powershell
 npm.cmd run dev
 ```
 
-## Run Backend Only
+## Running Services Separately
+
+Backend only:
 
 ```bash
 npm run dev --workspace backend
 ```
 
-The API starts on `http://localhost:3001`.
-
-## Run Frontend Only
+Frontend only:
 
 ```bash
 npm run dev --workspace frontend
 ```
 
-The frontend starts on `http://localhost:3000`.
+## Production Build
 
-## Build for Production
+Build the frontend:
 
 ```bash
 npm run build
 ```
-
-This creates the frontend production build in `frontend/dist`. The Express backend is configured to serve that build.
 
 Start the production backend:
 
@@ -133,15 +189,11 @@ Start the production backend:
 npm start
 ```
 
-Then open:
+In production mode, Express serves the compiled frontend from `frontend/dist`.
 
-```text
-http://localhost:3001
-```
+## AWS Mode
 
-## AWS Configuration
-
-To use AWS services, update `backend/.env`:
+To use DynamoDB and S3, update `backend/.env`:
 
 ```env
 STORAGE_DRIVER=aws
@@ -153,65 +205,91 @@ SIGNED_URL_EXPIRES_SECONDS=3600
 
 Create these AWS resources:
 
-- A DynamoDB table named `crud-items`, or the name you set in `DYNAMODB_TABLE`.
-- The DynamoDB table must use `id` as the partition key with type `String`.
-- An S3 bucket named `crud-item-attachments`, or the name you set in `S3_BUCKET`.
+- DynamoDB table with partition key `id` of type `String`.
+- S3 bucket for attachment storage.
 
-The backend uses the standard AWS SDK credential chain. You can provide credentials through environment variables, an AWS profile, EC2 role, Elastic Beanstalk role, or another supported AWS identity source.
+The backend uses the standard AWS SDK credential provider chain, so credentials can come from environment variables, an AWS profile, an EC2 role, Elastic Beanstalk, or another supported AWS identity source.
 
-The IAM identity running the backend needs permission to:
+Required IAM capabilities:
 
-- Read, write, scan, and delete items in the DynamoDB table.
-- Put, get, and delete objects in the S3 bucket.
+- DynamoDB: read, write, scan, and delete table items.
+- S3: put, get, and delete bucket objects.
 
 ## Docker
 
-Create `backend/.env` first, then build and run with Docker Compose:
+Create `backend/.env`, then run:
 
 ```bash
 docker compose up --build
 ```
 
-The container exposes the backend on:
+Open:
 
 ```text
 http://localhost:3001
 ```
 
-In production Docker mode, the backend serves the compiled frontend as well.
+The Docker image builds the frontend and serves it through the backend.
 
-## API Endpoints
+## API Reference
 
-```text
-GET    /health
-GET    /api/items
-GET    /api/items/:id
-POST   /api/items
-PUT    /api/items/:id
-DELETE /api/items/:id
-```
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/health` | API health check |
+| GET | `/api/items` | List all items |
+| GET | `/api/items/:id` | Get one item |
+| POST | `/api/items` | Create an item |
+| PUT | `/api/items/:id` | Update an item |
+| DELETE | `/api/items/:id` | Delete an item |
+| GET | `/api/files/:storageKey` | Open local-mode attachment |
 
 Create and update requests use `multipart/form-data`.
 
-Fields:
-
-- `name` required.
-- `description` optional.
-- `file` optional attachment.
-- `removeFile` optional on update. Use `true` to remove the current attachment.
+| Field | Required | Description |
+| --- | --- | --- |
+| `name` | Yes | Item name |
+| `description` | No | Item description |
+| `file` | No | Attachment file |
+| `removeFile` | No | Use `true` during update to remove the current attachment |
 
 ## Useful Scripts
 
-```bash
-npm run dev
-npm run build
-npm start
-npm run lint --workspace frontend
-```
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Run frontend and backend together |
+| `npm run build` | Build the frontend for production |
+| `npm start` | Start the production backend |
+| `npm run lint --workspace frontend` | Lint the frontend |
 
-## Notes
+## Local Storage Notes
 
-- Local mode stores data in `backend/data` and uploaded files in `backend/uploads`.
-- Uploaded files are limited to 10MB.
-- S3 attachments are accessed through signed URLs.
-- Signed URL expiry is controlled by `SIGNED_URL_EXPIRES_SECONDS`.
+When `STORAGE_DRIVER=local`:
+
+- Item records are stored in `backend/data/items.json`.
+- Uploaded files are stored in `backend/uploads`.
+- Attachment links are served through the backend at `/api/files/:storageKey`.
+
+These folders are ignored by Git so local demo data does not pollute the repository.
+
+## Cloud Concepts Demonstrated
+
+- Server-side REST API design.
+- Multipart file upload handling.
+- NoSQL item persistence with DynamoDB.
+- Object storage with S3.
+- Private file access through signed URLs.
+- Environment-based configuration.
+- Containerized deployment.
+- Frontend production bundling with Vite.
+
+## Future Improvements
+
+- Add authentication with Amazon Cognito.
+- Add pagination for large DynamoDB tables.
+- Add upload progress indicators.
+- Add automated tests for API routes.
+- Add CI/CD deployment workflow.
+
+## License
+
+This project is intended for academic and portfolio use. Add a license file before using it in a public production project.
